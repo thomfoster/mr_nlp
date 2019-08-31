@@ -43,7 +43,11 @@ if __name__ == '__main__':
     train_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('train')]
     train_dataset = D.ChainDataset(train_datasets)
 
+    valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
+    valid_dataset = D.ChainDataset(valid_datasets)
+
     train_loader = D.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn)
+    valid_loader = D.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
 
     language_model = Bert(temp_dir='./temp' , load_pretrained_bert=True, bert_config=None)
     finetune_model = Classifier(hidden_size=768)
@@ -56,7 +60,7 @@ if __name__ == '__main__':
     # Main training loop
     logger.info("Starting training...")
 
-    for ep in range(5000):
+    for ep in range(5):
         model.train()
         optimizer.zero_grad()
         for idx, batch in enumerate(train_loader):
@@ -67,12 +71,30 @@ if __name__ == '__main__':
             loss += criterion(output, batch.labels)
             loss.backward()
 
-            if (idx+1)%10==0:
+            if (idx+1)%6==0:
+                print('Backprop on accumulated grads')
                 # every 10 iterations, update parameters
                 optimizer.step()
                 optimizer.zero_grad()
 
-            if idx%50==0:
+            if (idx+1)%10==0:
+                tp = tn = fp = fn = 0
+                for jdx, batch in enumerate(valid_loader):
+                    print('Running through validation batch')
+                    print('val labels shape: ', batch.labels.shape)
+                    outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
+                    outputs = (output>0.5).type(torch.int)
+                    print('val outputs shape:',outputs.shape)                                                                                                                                                                                                                                                                                   
+                    tp += ((outputs == 1) * (batch.labels == 1)).sum().item()
+                    tn += ((outputs == 1) * (batch.labels == 1)).sum().item()
+                    fp += ((outputs == 1) * (batch.labels == 0)).sum().item()
+                    fn += ((outputs == 0) * (batch.labels == 1)).sum().item()
+                    if jdx == 5:
+                        break
+                cf = np.array([[tp, fp],[fn, tn]])
+                print(cf)
+
+
                 print(f'Completed {idx} iterations, loss: {loss.item()}')
 
         logger.info("Epoch %s complete. Loss: %s" % (ep, loss))
