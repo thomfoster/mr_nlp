@@ -5,7 +5,7 @@ import sys
 
 import torch.nn as nn
 import torch.utils.data as D
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pltip
 import numpy as np
 import math
 
@@ -55,15 +55,25 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
 
     checkpoint_number = 1
+    steps = 1
+
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Main training loop
     logger.info("Starting training...")
 
-    for ep in range(50000):
+    while steps < 150000:
+
         optimizer.zero_grad()
+
         for idx, batch in enumerate(train_loader):
+
+            # rate schedule
+            lr = 2e-3 * min(steps**(-0.5), steps*30000**(-1.5))
+            optimizer.param_groups[0]['lr'] = lr
+             
             model.train()
-            loss = torch.Tensor([0.0]).to('cuda:0')
+            loss = torch.Tensor([0.0]).to(device)
             output = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
             print('outputs shape:',output.shape)
             print(f'labels shape:{batch.labels.shape}, labels type:{batch.labels.type()}')
@@ -76,6 +86,8 @@ if __name__ == '__main__':
                 # every 10 iterations, update parameters
                 optimizer.step()
                 optimizer.zero_grad()
+
+            steps += 1
 
             # Validating model
             if (idx+1)%2==0:

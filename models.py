@@ -42,8 +42,9 @@ class Summarizer(nn.Module):
         super(Summarizer, self).__init__()
         self.language_model = language_model
         self.finetune_model = finetune_model
-        
-        self.to('cuda:0')
+
+        device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.to(device)
         
     def forward(self, x, segs, clss, mask_attn, mask_clss):
         # Pass input into language model
