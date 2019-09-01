@@ -44,7 +44,7 @@ if __name__ == '__main__':
     train_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('train')]
     train_dataset = D.ChainDataset(train_datasets)
 
-    train_loader = D.DataLoader(train_dataset, batch_size=6, collate_fn=collate_fn)
+    train_loader = D.DataLoader(train_dataset, batch_size=12, collate_fn=collate_fn)
 
     language_model = Bert(temp_dir='./temp' , load_pretrained_bert=True, bert_config=None)
     finetune_model = Classifier(hidden_size=768)
@@ -81,7 +81,7 @@ if __name__ == '__main__':
             loss.backward()
 
             # Gradient update
-            if (idx+1)%6==0:
+            if (idx+1)%3==0:
                 logger.debug('Backprop on accumulated grads')
                 # every 10 iterations, update parameters
                 optimizer.step()
