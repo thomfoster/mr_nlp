@@ -91,39 +91,39 @@ if __name__ == '__main__':
 
             # Validating model
             if (idx+1)%10==0:
+                with torch.no_grad():
+                    valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
+                    shuffle(valid_datasets)
+                    valid_dataset = D.ChainDataset(valid_datasets)
+                    valid_loader = D.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
 
-                valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
-                shuffle(valid_datasets)
-                valid_dataset = D.ChainDataset(valid_datasets)
-                valid_loader = D.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
-
-                tp = tn = fp = fn = 0
-                
-                valid_loss = 0
-                for jdx, batch in enumerate(valid_loader):
-                    model.eval()
-                    logger.debug('Running through validation batch')
-                    logger.debug('val labels shape: ', batch.labels.shape)
-                    outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
-                    valid_loss += criterion(outputs, batch.labels)
+                    tp = tn = fp = fn = 0
                     
-                #     logger.debug(outputs)
-                #     outputs = (outputs>0.5).type(torch.int)
-                #     logger.debug('val outputs shape:',outputs.shape)
-                #     tp += ((outputs == 1) * (batch.labels == 1)).sum().item()
-                #     tn += ((outputs == 0) * (batch.labels == 0)).sum().item()
-                #     fp += ((outputs == 1) * (batch.labels == 0)).sum().item()
-                #     fn += ((outputs == 0) * (batch.labels == 1)).sum().item()
+                    valid_loss = 0
+                    for jdx, batch in enumerate(valid_loader):
+                        model.eval()
+                        logger.debug('Running through validation batch')
+                        logger.debug('val labels shape: ', batch.labels.shape)
+                        outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
+                        valid_loss += criterion(outputs, batch.labels)
+                        
+                        logger.debug(outputs)
+                        outputs = (outputs>0.5).type(torch.int)
+                        logger.debug('val outputs shape:',outputs.shape)
+                        tp += ((outputs == 1) * (batch.labels == 1)).sum().item()
+                        tn += ((outputs == 0) * (batch.labels == 0)).sum().item()
+                        fp += ((outputs == 1) * (batch.labels == 0)).sum().item()
+                        fn += ((outputs == 0) * (batch.labels == 1)).sum().item()
 
-                    if jdx == 100:
-                        break
+                        if jdx == 100:
+                            break
 
-                # cf = np.array([[tp, fp],[fn, tn]])
-                # logger.info(cf)
+                    cf = np.array([[tp, fp],[fn, tn]])
+                    logger.info(cf)
 
-                logger.info(f'Completed {idx} iterations, loss: {loss.item()}')
-                logger.info(f'valid_loss: {valid_loss}')
-                logger.info(f'lr: {lr}')
+                    logger.info(f'Completed {idx} iterations, loss: {loss.item()}')
+                    logger.info(f'valid_loss: {valid_loss}')
+                    logger.info(f'lr: {lr}')
 
             # Saving model
             if (idx+1)%5000==0:
