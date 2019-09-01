@@ -88,8 +88,8 @@ if __name__ == '__main__':
                 optimizer.zero_grad()
 
             steps += 1
-
-            logger.info(f'Steps: {steps}')
+            if (idx+1)%50==0:
+                logger.info(f'Steps: {steps}')
 
             # Validating model
             if (idx+1)%1000==0:
