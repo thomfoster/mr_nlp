@@ -43,7 +43,7 @@ class Summarizer(nn.Module):
         self.language_model = language_model
         self.finetune_model = finetune_model
         
-        self.to('cpu')
+        self.to('cuda:0')
         
     def forward(self, x, segs, clss, mask_attn, mask_clss):
         # Pass input into language model

@@ -38,7 +38,7 @@ def collate_fn(batch):
 
     # Ensure that masks initially specified as 0s and 1s
     # are converted to float32 tensors
-    device='cpu'
+    device='cuda:0'
     src = torch.Tensor(src).type(torch.long).to(device)
     segs = torch.Tensor(segs).type(torch.long).to(device)
     clss = torch.Tensor(clss).type(torch.float32).to(device)

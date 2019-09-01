@@ -54,27 +54,31 @@ if __name__ == '__main__':
     criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
 
+    checkpoint_number = 1
+
     # Main training loop
     logger.info("Starting training...")
 
-    for ep in range(5):
-        model.train()
+    for ep in range(50000):
         optimizer.zero_grad()
         for idx, batch in enumerate(train_loader):
-            loss = torch.Tensor([0.0]).to('cpu')
+            model.train()
+            loss = torch.Tensor([0.0]).to('cuda:0')
             output = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
             print('outputs shape:',output.shape)
             print(f'labels shape:{batch.labels.shape}, labels type:{batch.labels.type()}')
             loss += criterion(output, batch.labels)
             loss.backward()
 
+            # Gradient update
             if (idx+1)%6==0:
                 print('Backprop on accumulated grads')
                 # every 10 iterations, update parameters
                 optimizer.step()
                 optimizer.zero_grad()
 
-            if (idx+1)%10==0:
+            # Validating model
+            if (idx+1)%2==0:
 
                 valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
                 shuffle(valid_datasets)
@@ -84,6 +88,7 @@ if __name__ == '__main__':
                 tp = tn = fp = fn = 0
 
                 for jdx, batch in enumerate(valid_loader):
+                    model.eval()
                     print('Running through validation batch')
                     print('val labels shape: ', batch.labels.shape)
                     outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
@@ -102,9 +107,16 @@ if __name__ == '__main__':
 
                 print(f'Completed {idx} iterations, loss: {loss.item()}')
 
-                fn = './checkpoints/chkpt'+str(ep)+'_'+str(idx)+'.pth.tar'
+            # Saving model
+            if (idx+1)%5==0:
+
+                checkpoint_number += 1
+                checkpoint_number = checkpoint_number % 15
+
+                fn = './checkpoints/chkpt'+str(checkpoint_number)+'.pth.tar'
                 torch.save({
                     'epoch': ep + 1,
+                    'idx': idx + 1,
                     'state_dict': model.state_dict(),
                     'optimizer' : optimizer.state_dict(),
                 }, fn)
