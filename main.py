@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
                 fn = './checkpoints/chkpt'+str(checkpoint_number)+'.pth.tar'
                 torch.save({
-                    'epoch': ep + 1,
+                    'epoch': steps,
                     'idx': idx + 1,
                     'state_dict': model.state_dict(),
                     'optimizer' : optimizer.state_dict(),
