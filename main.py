@@ -44,7 +44,7 @@ if __name__ == '__main__':
     train_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('train')]
     train_dataset = D.ChainDataset(train_datasets)
 
-    train_loader = D.DataLoader(train_dataset, batch_size=9, collate_fn=collate_fn)
+    train_loader = D.DataLoader(train_dataset, batch_size=12, collate_fn=collate_fn)
 
     language_model = Bert(temp_dir='./temp' , load_pretrained_bert=True, bert_config=None)
     finetune_model = Classifier(hidden_size=768)
@@ -81,7 +81,7 @@ if __name__ == '__main__':
             loss.backward()
 
             # Gradient update
-            if (idx+1)%4==0:
+            if (idx+1)%3==0:
                 logger.debug('Backprop on accumulated grads')
                 # every 10 iterations, update parameters
                 optimizer.step()
@@ -91,11 +91,12 @@ if __name__ == '__main__':
 
             # Validating model
             if (idx+1)%10==0:
+
                 with torch.no_grad():
                     valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
                     shuffle(valid_datasets)
                     valid_dataset = D.ChainDataset(valid_datasets)
-                    valid_loader = D.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
+                    valid_loader = D.DataLoader(valid_dataset, batch_size=12, collate_fn=collate_fn)
 
                     tp = tn = fp = fn = 0
                     
@@ -122,7 +123,7 @@ if __name__ == '__main__':
                     logger.info(cf)
 
                     logger.info(f'Completed {idx} iterations, loss: {loss.item()}')
-                    logger.info(f'valid_loss: {valid_loss}')
+                    logger.info(f'valid_loss: {valid_loss/100}')
                     logger.info(f'lr: {lr}')
 
             # Saving model
