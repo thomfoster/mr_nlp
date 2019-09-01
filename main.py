@@ -90,7 +90,7 @@ if __name__ == '__main__':
             steps += 1
 
             # Validating model
-            if (idx+1)%1000==0:
+            if (idx+1)%10==0:
 
                 valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
                 shuffle(valid_datasets)
