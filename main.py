@@ -89,8 +89,10 @@ if __name__ == '__main__':
 
             steps += 1
 
+            logger.info(f'Steps: {steps}')
+
             # Validating model
-            if (idx+1)%10==0:
+            if (idx+1)%1000==0:
 
                 with torch.no_grad():
                     valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
