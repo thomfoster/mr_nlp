@@ -11,6 +11,7 @@ import math
 
 from utils import IndividualFileDataset, Batch, collate_fn
 from models import Bert, Classifier, Summarizer
+from random import shuffle
 
 def get_filepaths(file_type):
     "Get all the bert_data files" 
@@ -43,11 +44,7 @@ if __name__ == '__main__':
     train_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('train')]
     train_dataset = D.ChainDataset(train_datasets)
 
-    valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
-    valid_dataset = D.ChainDataset(valid_datasets)
-
-    train_loader = D.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn)
-    valid_loader = D.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
+    train_loader = D.DataLoader(train_dataset, batch_size=6, collate_fn=collate_fn)
 
     language_model = Bert(temp_dir='./temp' , load_pretrained_bert=True, bert_config=None)
     finetune_model = Classifier(hidden_size=768)
@@ -55,7 +52,7 @@ if __name__ == '__main__':
     model = Summarizer(language_model, finetune_model)
 
     criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
 
     # Main training loop
     logger.info("Starting training...")
@@ -78,19 +75,28 @@ if __name__ == '__main__':
                 optimizer.zero_grad()
 
             if (idx+1)%10==0:
+
+                valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
+                shuffle(valid_datasets)
+                valid_dataset = D.ChainDataset(valid_datasets)
+                valid_loader = D.DataLoader(valid_dataset, batch_size=6, collate_fn=collate_fn)
+
                 tp = tn = fp = fn = 0
+
                 for jdx, batch in enumerate(valid_loader):
                     print('Running through validation batch')
                     print('val labels shape: ', batch.labels.shape)
                     outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
-                    outputs = (output>0.5).type(torch.int)
-                    print('val outputs shape:',outputs.shape)                                                                                                                                                                                                                                                                                   
+                    print(outputs)
+                    outputs = (outputs>0.5).type(torch.int)
+                    print('val outputs shape:',outputs.shape)
                     tp += ((outputs == 1) * (batch.labels == 1)).sum().item()
-                    tn += ((outputs == 1) * (batch.labels == 1)).sum().item()
+                    tn += ((outputs == 0) * (batch.labels == 0)).sum().item()
                     fp += ((outputs == 1) * (batch.labels == 0)).sum().item()
                     fn += ((outputs == 0) * (batch.labels == 1)).sum().item()
                     if jdx == 5:
                         break
+
                 cf = np.array([[tp, fp],[fn, tn]])
                 print(cf)
 
