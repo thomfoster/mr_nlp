@@ -4,3 +4,4 @@ __pycache__/
 temp/
 data/
 log.txt
+checkpoints/

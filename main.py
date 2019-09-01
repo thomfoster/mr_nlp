@@ -100,14 +100,13 @@ if __name__ == '__main__':
                 cf = np.array([[tp, fp],[fn, tn]])
                 print(cf)
 
-
                 print(f'Completed {idx} iterations, loss: {loss.item()}')
 
-        logger.info("Epoch %s complete. Loss: %s" % (ep, loss))
-        fn = 'chkpt'+str(ep)+'.pth.tar'
-        torch.save({
-            'epoch': ep + 1,
-            'state_dict': model.state_dict(),
-            'optimizer' : optimizer.state_dict(),
-        }, fn)
-        print(f'saved model after epoch: {ep}')
+                fn = './checkpoints/chkpt'+str(ep)+'_'+str(idx)+'.pth.tar'
+                torch.save({
+                    'epoch': ep + 1,
+                    'state_dict': model.state_dict(),
+                    'optimizer' : optimizer.state_dict(),
+                }, fn)
+
+                print('Model saved')
