@@ -90,7 +90,7 @@ if __name__ == '__main__':
             steps += 1
 
             # Validating model
-            if (idx+1)%2==0:
+            if (idx+1)%100==0:
 
                 valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
                 shuffle(valid_datasets)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                 logger.info(f'Completed {idx} iterations, loss: {loss.item()}')
 
             # Saving model
-            if (idx+1)%5==0:
+            if (idx+1)%5000==0:
 
                 checkpoint_number += 1
                 checkpoint_number = checkpoint_number % 15
