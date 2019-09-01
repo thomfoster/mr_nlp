@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     # Set up logging
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     # create file and console handlers
     fh = logging.FileHandler('log.txt')
     ch = logging.StreamHandler()
@@ -75,14 +75,14 @@ if __name__ == '__main__':
             model.train()
             loss = torch.Tensor([0.0]).to(device)
             output = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
-            print('outputs shape:',output.shape)
-            print(f'labels shape:{batch.labels.shape}, labels type:{batch.labels.type()}')
+            logger.debug('outputs shape:',output.shape)
+            logger.debug(f'labels shape:{batch.labels.shape}, labels type:{batch.labels.type()}')
             loss += criterion(output, batch.labels)
             loss.backward()
 
             # Gradient update
             if (idx+1)%6==0:
-                print('Backprop on accumulated grads')
+                logger.debug('Backprop on accumulated grads')
                 # every 10 iterations, update parameters
                 optimizer.step()
                 optimizer.zero_grad()
@@ -101,12 +101,12 @@ if __name__ == '__main__':
 
                 for jdx, batch in enumerate(valid_loader):
                     model.eval()
-                    print('Running through validation batch')
-                    print('val labels shape: ', batch.labels.shape)
+                    logger.debug('Running through validation batch')
+                    logger.debug('val labels shape: ', batch.labels.shape)
                     outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
-                    print(outputs)
+                    logger.debug(outputs)
                     outputs = (outputs>0.5).type(torch.int)
-                    print('val outputs shape:',outputs.shape)
+                    logger.debug('val outputs shape:',outputs.shape)
                     tp += ((outputs == 1) * (batch.labels == 1)).sum().item()
                     tn += ((outputs == 0) * (batch.labels == 0)).sum().item()
                     fp += ((outputs == 1) * (batch.labels == 0)).sum().item()
@@ -115,9 +115,9 @@ if __name__ == '__main__':
                         break
 
                 cf = np.array([[tp, fp],[fn, tn]])
-                print(cf)
+                logger.info(cf)
 
-                print(f'Completed {idx} iterations, loss: {loss.item()}')
+                logger.info(f'Completed {idx} iterations, loss: {loss.item()}')
 
             # Saving model
             if (idx+1)%5==0:
@@ -133,4 +133,4 @@ if __name__ == '__main__':
                     'optimizer' : optimizer.state_dict(),
                 }, fn)
 
-                print('Model saved')
+                logger.info('Model saved')

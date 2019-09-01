@@ -13,11 +13,11 @@ class Bert(nn.Module):
             self.model = BertModel(bert_config)
     
     def forward(self, x, segs, mask_attn):
-        print('input to bert shape:',x.shape)
+        # print('input to bert shape:',x.shape)
         encoded_layers, _ =self.model(x, segs, attention_mask=mask_attn)
-        print('encoded layers shape:',encoded_layers.shape)
+        # print('encoded layers shape:',encoded_layers.shape)
         final_vec = encoded_layers
-        print('bert output shape:',final_vec.shape)
+        # print('bert output shape:',final_vec.shape)
         return final_vec
 
 
@@ -29,7 +29,7 @@ class Classifier(nn.Module):
         self.sigmoid = nn.Sigmoid()
         
     def forward(self, x, mask_clss):
-        print('input going into sigmoid:',x.shape)
+        # print('input going into sigmoid:',x.shape)
         h = self.linear1(x).squeeze(-1) # squeeze(-1) removes last axis
         sent_scores = self.sigmoid(h) * mask_clss
         return sent_scores
