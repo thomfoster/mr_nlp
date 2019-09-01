@@ -81,7 +81,7 @@ if __name__ == '__main__':
             loss.backward()
 
             # Gradient update
-            if (idx+1)%3==0:
+            if (idx+1)%6==0:
                 logger.debug('Backprop on accumulated grads')
                 # every 10 iterations, update parameters
                 optimizer.step()
