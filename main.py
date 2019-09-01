@@ -115,8 +115,8 @@ if __name__ == '__main__':
                 #     fp += ((outputs == 1) * (batch.labels == 0)).sum().item()
                 #     fn += ((outputs == 0) * (batch.labels == 1)).sum().item()
 
-                #     if jdx == 100:
-                #         break
+                    if jdx == 100:
+                        break
 
                 # cf = np.array([[tp, fp],[fn, tn]])
                 # logger.info(cf)
