@@ -105,7 +105,7 @@ if __name__ == '__main__':
                     logger.debug('Running through validation batch')
                     logger.debug('val labels shape: ', batch.labels.shape)
                     outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
-                #     valid_loss += criterion(outputs, batch.labels)
+                    valid_loss += criterion(outputs, batch.labels)
                     
                 #     logger.debug(outputs)
                 #     outputs = (outputs>0.5).type(torch.int)
