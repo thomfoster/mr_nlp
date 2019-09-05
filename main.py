@@ -40,7 +40,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Genei V1')
 
     # Optimizer, batch size and gradient accumulation, and number of steps parameters
-    parser.add_argument('--lr', default=0.002, type=float, help='learning rate')
+    parser.add_argument('--lr', default=0.0002, type=float, help='learning rate')
     parser.add_argument('--bs', default=6, type=int, help='batch size')
     parser.add_argument('--grad_accum_steps', default=6, type=int, help='gradient accumulation')
     parser.add_argument('--steps', default=150_000, type=int, help='total number of steps')

@@ -84,7 +84,7 @@ def _cf(outputs, labels):
 
 def _mcc(tn, fp, fn, tp): # Log then exp for numerical stability
     corr = tn * tp - fn * fp
-    den = .5 * torch.log(torch.tensor([tp + fp, tp + fn, tn + fp, tn + fn]))
+    den = .5 * torch.log(torch.tensor([tp + fp, tp + fn, tn + fp, tn + fn])).sum()
     if corr > 0:
         num = torch.log(corr)
         return torch.exp(num - den)
