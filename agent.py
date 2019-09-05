@@ -84,7 +84,6 @@ class GeneiAgent():
             self.model.train() # Model in train mode so it does dropout and batch norm appropriately
 
             for idx, batch in enumerate(train_loader): # Iterate through the batches
-                print(idx)
                 self.optimizer.param_groups[0]['lr'] = lr_schedule(lr, self.step) # Learning rate schedule
 
                 # Forward prop, compute output through LM and finetune layer
@@ -101,7 +100,7 @@ class GeneiAgent():
                 smooth_lbs = _binary_smooth(mskd_lbs, alpha=alpha) # Eg [0,0,0,1,0] ---> [0.05, 0.05, 0.05, 0.95, 0.05]
 
                 # Compute weighted loss and backprop
-                loss = nn.BCELoss(weight=weights)(mskd_outs, smooth_lbs)
+                loss = nn.BCELoss(weight=weights, reduction='mean')(mskd_outs, smooth_lbs)
                 loss.backward()
 
                 # Gradient accumulation every N batches (default value: every 6 batches)
@@ -113,12 +112,13 @@ class GeneiAgent():
                 self.step += 1
 
                 # Print step every 50 iterations
-                if (idx+1)%50==0:
+                if (idx+1)%100==0:
                     logger.info(f'Steps: {self.step}')
+                    print(f'Steps: {self.step}')
 
                 # Validate model every 1000 batches
                 if (idx+1)%1000==0:
-                    self.validate(valid_loader=valid_loader)
+                    self.validate(valid_loader=valid_loader, alpha=alpha)
 
                 # Save every 10_000 steps
                 if (idx+1)%1000==0:
@@ -131,7 +131,7 @@ class GeneiAgent():
                         logger.info('Cannot save because no saving path specified')
 
 
-    def validate(self, valid_loader, criterion=nn.BCELoss(), val_iters=100):
+    def validate(self, valid_loader, criterion=nn.BCELoss(), val_iters=100, alpha=0.1):
 
         self.model.eval() # Model in eval mode to avoid dropout and use appropriate batch norm
 
@@ -145,22 +145,29 @@ class GeneiAgent():
             for i, batch in enumerate(valid_loader): # Iterate through validation dataset
 
                 # Forward prop through BERT + finetune and compute loss
-                outputs = self.model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0]  # select sent scores
+                output = self.model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0]  # select sent scores
+                msk = (batch.labels >= 0)
+                mskd_lbs = batch.labels[msk]
+                mskd_outs = output[msk]
 
-                # Binarization of outputs
-                outputs = torch.tensor([1 if x > .5 else 0 for x in outputs]).type(torch.int)
+                # Label smoothing for masked labels
+                smooth_lbs = _binary_smooth(mskd_lbs, alpha=alpha) # Eg [0,0,0,1,0] ---> [0.05, 0.05, 0.05, 0.95, 0.05]
 
                 # Compute validation loss
-                valid_loss += criterion(outputs, batch.labels)
+                valid_loss += nn.BCELoss(weight=weights, reduction='mean')(mskd_outs, smooth_lbs)
+
+                # Binarization of outputs
+                binary_outputs = (mskd_outs > .5).type(torch.int)
 
                 # Confusion matrix update
-                cf += _cf(outputs, labels)
+                cf += _cf(binary_outputs, labels)
                 logger.debug('val outputs shape:', outputs.shape)
 
                 # After n_val_iters, update self.cf and self.mcc, then break
                 if (i+1)%val_iters == 0:
                     self.cf = cf
                     logger.info('confusion_matrix: \n', self.cf)
+                    print('confusion_matrix: \n', self.cf)
                     tn, fp, fn, tp = self.cf.type(torch.float).view(-1)
                     self.mcc = _mcc(tn, fp, fn, tp)
                     print(f'MCC:{self.mcc}')
