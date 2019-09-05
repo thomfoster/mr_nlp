@@ -84,7 +84,7 @@ class GeneiAgent():
             self.model.train() # Model in train mode so it does dropout and batch norm appropriately
 
             for idx, batch in enumerate(train_loader): # Iterate through the batches
-
+                print(idx)
                 self.optimizer.param_groups[0]['lr'] = lr_schedule(lr, self.step) # Learning rate schedule
 
                 # Forward prop, compute output through LM and finetune layer
