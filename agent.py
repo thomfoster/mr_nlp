@@ -113,7 +113,7 @@ class GeneiAgent():
 
                 # Print step every 50 iterations
                 if (idx+1)%50==0:
-                    logger.info(f'Steps: {step}')
+                    logger.info(f'Steps: {self.step}')
 
                 # Validate model every 1000 batches
                 if (idx+1)%1000==0:
