@@ -14,6 +14,7 @@ class GeneiAgent():
     def __init__(self, model, optimizer=None, criterion=None):
         super(GeneiAgent, self).__init__()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        print('Device:',self.device)
         logger.info(f'Using device:',self.device)
         self.step = 0
         self.model = model.to(self.device)
