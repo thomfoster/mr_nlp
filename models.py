@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
-
+import logging
+logger = logging.getLogger(__name__)
 from pytorch_transformers import BertModel
 
 class Bert(nn.Module):
@@ -29,7 +30,7 @@ class Classifier(nn.Module):
         self.sigmoid = nn.Sigmoid()
         
     def forward(self, x, mask_clss):
-        # print('input going into sigmoid:',x.shape)
+        logger.debug('input going into sigmoid:',x.shape)
         h = self.linear1(x).squeeze(-1) # squeeze(-1) removes last axis
         sent_scores = self.sigmoid(h) * mask_clss
         return sent_scores

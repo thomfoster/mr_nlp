@@ -5,27 +5,21 @@ import sys
 
 import torch.nn as nn
 import torch.utils.data as D
-import matplotlib.pyplot as pltip
 import numpy as np
 import math
 
-from utils import IndividualFileDataset, Batch, collate_fn
+from utils import IndividualFileDataset, Batch, collate_fn, gen_loader
 from models import Bert, Classifier, Summarizer
 from random import shuffle
 
-def get_filepaths(file_type):
-    "Get all the bert_data files" 
-    rootdir = './data'
-    filepaths = []
-    for subdir, _, files in os.walk(rootdir):
-        for file in files:
-            if file_type in file:
-                filepaths.append(os.path.join(subdir, file))
-    return filepaths
+from agent import GeneiAgent
 
+import agent
 
+import argparse
 
 if __name__ == '__main__':
+
 
     # Set up logging
     logger = logging.getLogger(__name__)
@@ -41,105 +35,123 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     logger.addHandler(ch)
 
-    train_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('train')]
-    train_dataset = D.ChainDataset(train_datasets)
 
-    train_loader = D.DataLoader(train_dataset, batch_size=6, collate_fn=collate_fn)
 
+    parser = argparse.ArgumentParser(description='Genei V1')
+
+    # Optimizer, batch size and gradient accumulation, and number of steps parameters
+    parser.add_argument('--lr', default=0.002, type=float, help='learning rate')
+    parser.add_argument('--bs', default=6, type=int, help='batch size')
+    parser.add_argument('--grad_accum_steps', default=6, type=int, help='gradient accumulation')
+    parser.add_argument('--steps', default=150_000, type=int, help='total number of steps')
+    parser.add_argument('--alpha', default=0.1, type=float, help='label-smoothing parameter')
+    parser.add_argument('--resume_chkpt_path', default=None)
+
+    args = parser.parse_args()
+
+    logger.info(args)
+
+
+    # Load in data
+    train_loader = gen_loader(args, collate_fn, type='train')
+    valid_loader = gen_loader(args, collate_fn, type='valid')
+
+    # Initialize BERT and fine-tune models
     language_model = Bert(temp_dir='./temp' , load_pretrained_bert=True, bert_config=None)
     finetune_model = Classifier(hidden_size=768)
 
+    # Wrap model together
     model = Summarizer(language_model, finetune_model)
 
-    criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+    # Optimizer
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    checkpoint_number = 1
-    steps = 1
+    # Agent
+    genei = GeneiAgent(model=model, optimizer=optimizer)
 
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    if args.resume_chkpt_path is not None:
+        if use_S3:
+            genei.load_chkpt_from_S3(resume_chkpt_path)
+        else:
+            genei.load_chkpt(resume_chkpt_path)
 
-    # Main training loop
-    logger.info("Starting training...")
+    genei.train(train_loader = train_loader,
+                valid_loader = valid_loader,
+                lr = args.lr,
+                tot_training_steps = args.steps,
+                grad_accum_steps=args.grad_accum_steps,
+                alpha=args.alpha
+                )
 
-    while steps < 150000:
 
-        optimizer.zero_grad()
-
-        for idx, batch in enumerate(train_loader):
-
-            # rate schedule
-            lr = 2e-3 * min(steps**(-0.5), steps*30000**(-1.5))
-            optimizer.param_groups[0]['lr'] = lr
-             
-            model.train()
-            loss = torch.Tensor([0.0]).to(device)
-            output = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
-            logger.debug('outputs shape:',output.shape)
-            logger.debug(f'labels shape:{batch.labels.shape}, labels type:{batch.labels.type()}')
-            loss += criterion(output, batch.labels)
-            loss.backward()
-
-            # Gradient update
-            if (idx+1)%6==0:
-                logger.debug('Backprop on accumulated grads')
-                # every 10 iterations, update parameters
-                optimizer.step()
-                optimizer.zero_grad()
-
-            steps += 1
-            if (idx+1)%50==0:
-                logger.info(f'Steps: {steps}')
-
-            # Validating model
-            if (idx+1)%1000==0:
-
-                with torch.no_grad():
-                    valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
-                    shuffle(valid_datasets)
-                    valid_dataset = D.ChainDataset(valid_datasets)
-                    valid_loader = D.DataLoader(valid_dataset, batch_size=6, collate_fn=collate_fn)
-
-                    tp = tn = fp = fn = 0
-                    
-                    valid_loss = 0
-                    for jdx, batch in enumerate(valid_loader):
-                        model.eval()
-                        logger.debug('Running through validation batch')
-                        logger.debug('val labels shape: ', batch.labels.shape)
-                        outputs = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
-                        valid_loss += criterion(outputs, batch.labels)
-                        
-                        logger.debug(outputs)
-                        outputs = (outputs>0.5).type(torch.int)
-                        logger.debug('val outputs shape:',outputs.shape)
-                        tp += ((outputs == 1) * (batch.labels == 1)).sum().item()
-                        tn += ((outputs == 0) * (batch.labels == 0)).sum().item()
-                        fp += ((outputs == 1) * (batch.labels == 0)).sum().item()
-                        fn += ((outputs == 0) * (batch.labels == 1)).sum().item()
-
-                        if jdx == 100:
-                            break
-
-                    cf = np.array([[tp, fp],[fn, tn]])
-                    logger.info(cf)
-
-                    logger.info(f'Completed {idx} iterations, loss: {loss.item()}')
-                    logger.info(f'valid_loss: {valid_loss/100}')
-                    logger.info(f'lr: {lr}')
-
-            # Saving model
-            if (idx+1)%5000==0:
-
-                checkpoint_number += 1
-                checkpoint_number = checkpoint_number % 15
-
-                fn = './checkpoints/chkpt'+str(checkpoint_number)+'.pth.tar'
-                torch.save({
-                    'epoch': steps,
-                    'idx': idx + 1,
-                    'state_dict': model.state_dict(),
-                    'optimizer' : optimizer.state_dict(),
-                }, fn)
-
-                logger.info('Model saved')
+    #
+    # # Load checkpoint if checkpoint given
+    # if args.resume is not None:
+    #     logger.info('==> Resuming from checkpoint..')
+    #     assert os.path.isfile(args.chkpt), 'Error: checkpoint file does not exist'
+    #     checkpoint = torch.load(args.chkpt)
+    #     model.load_state_dict(checkpoint['state_dict'])
+    #     optimizer.load_state_dict(checkpoint['optimizer'])
+    #     step =checkpoint['step']
+    #
+    # # Use GPU if possible
+    # device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    # logger.info('Using device: ',device)
+    #
+    # # Main training loop
+    # logger.info("Starting training...")
+    # while step < args.steps:
+    #     optimizer.zero_grad()
+    #     for idx, batch in enumerate(train_loader):
+    #         # learning rate schedule
+    #         optimizer.param_groups[0]['lr'] = lr_schedule(args.lr,step)
+    #
+    #         # put model in train mode, so it does dropout
+    #         model.train()
+    #
+    #         # Forward prop, compute output through LM and finetune layer
+    #         output = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0] # select sent scores
+    #         logger.debug('outputs shape:',output.shape)
+    #         logger.debug(f'labels shape:{batch.labels.shape}, labels type:{batch.labels.type()}')
+    #
+    #         # Compute loss and backprop
+    #         loss = criterion(output, batch.labels).to(device)
+    #         loss.backward()
+    #
+    #         # Gradient accumulation every N batches (default value: every 6 batches)
+    #         if (idx+1)%args.grad_accum==0:
+    #             logger.debug('Backprop on accumulated grads')
+    #             optimizer.step()
+    #             optimizer.zero_grad()
+    #
+    #         # Update step
+    #         step += 1
+    #
+    #         # Print steps every 50 batches
+    #         if (idx+1)%50==0:
+    #             logger.info(f'Steps: {step}')
+    #
+    #         # Validating model every 1000 batches
+    #         if (idx+1)%1000==0:
+    #             with torch.no_grad():
+    #                 # Make and shuffle validation dataset
+    #                 valid_datasets = [IndividualFileDataset(fp) for fp in get_filepaths('valid')]
+    #                 shuffle(valid_datasets)
+    #                 valid_dataset = D.ChainDataset(valid_datasets)
+    #                 valid_loader = D.DataLoader(valid_dataset, batch_size=6, collate_fn=collate_fn)
+    #
+    #                 # Do validation
+    #                 validate(valid_loader, model, criterion=criterion, iter_till_break=100)
+    #
+    #         # Saving model
+    #         if (idx+1)%5000==0:
+    #             checkpoint_number += 1
+    #             checkpoint_number = checkpoint_number % 15
+    #             fn = './checkpoints/chkpt'+str(checkpoint_number)+'.pth.tar'
+    #             torch.save({
+    #                 'step': step,
+    #                 'state_dict': model.state_dict(),
+    #                 'optimizer' : optimizer.state_dict(),
+    #             }, fn)
+    #
+    #             logger.info('Model saved')
