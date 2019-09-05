@@ -117,7 +117,7 @@ class GeneiAgent():
                     print(f'Steps: {self.step}')
 
                 # Validate model every 1000 batches
-                if (idx+1)%1000==0:
+                if (idx+1)%300==0:
                     self.validate(valid_loader=valid_loader, alpha=alpha)
 
                 # Save every 10_000 steps
