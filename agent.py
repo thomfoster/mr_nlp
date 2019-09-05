@@ -105,8 +105,8 @@ class GeneiAgent():
 
                 # Gradient accumulation every N batches (default value: every 6 batches)
                 if (idx+1)%grad_accum_steps==0:
-                    optimizer.step()
-                    optimizer.zero_grad()
+                    self.optimizer.step()
+                    self.optimizer.zero_grad()
 
                 # Update step
                 self.step += 1

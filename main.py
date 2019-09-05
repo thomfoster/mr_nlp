@@ -46,6 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('--steps', default=150_000, type=int, help='total number of steps')
     parser.add_argument('--alpha', default=0.1, type=float, help='label-smoothing parameter')
     parser.add_argument('--resume_chkpt_path', default=None)
+    parser.add_argument('--use_S3', default=False)
 
     args = parser.parse_args()
 
@@ -70,7 +71,7 @@ if __name__ == '__main__':
     genei = GeneiAgent(model=model, optimizer=optimizer)
 
     if args.resume_chkpt_path is not None:
-        if use_S3:
+        if args.use_S3:
             genei.load_chkpt_from_S3(resume_chkpt_path)
         else:
             genei.load_chkpt(resume_chkpt_path)
