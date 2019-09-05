@@ -131,7 +131,7 @@ class GeneiAgent():
                         logger.info('Cannot save because no saving path specified')
 
 
-    def validate(self, valid_loader, criterion=nn.BCELoss(), val_iters=100, alpha=0.1):
+    def validate(self, valid_loader, val_iters=100, alpha=0.1):
 
         self.model.eval() # Model in eval mode to avoid dropout and use appropriate batch norm
 
@@ -154,7 +154,7 @@ class GeneiAgent():
                 smooth_lbs = _binary_smooth(mskd_lbs, alpha=alpha) # Eg [0,0,0,1,0] ---> [0.05, 0.05, 0.05, 0.95, 0.05]
 
                 # Compute validation loss
-                valid_loss += nn.BCELoss(weight=weights, reduction='mean')(mskd_outs, smooth_lbs)
+                valid_loss += nn.BCELoss(reduction='mean')(mskd_outs, smooth_lbs)
 
                 # Binarization of outputs
                 binary_outputs = (mskd_outs > .5).type(torch.int)
