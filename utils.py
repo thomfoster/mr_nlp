@@ -75,10 +75,10 @@ def collate_fn(batch):
     return Batch(src, segs, clss, labels, mask_attn, mask_clss)
 
 def _cf(outputs, labels):
-    tp += ((outputs == 1) * (labels == 1)).sum() # True positives
-    tn += ((outputs == 0) * (labels == 0)).sum() # True negatives
-    fp += ((outputs == 1) * (labels == 0)).sum() # False positives
-    fn += ((outputs == 0) * (labels == 1)).sum() # False negatives
+    tp = ((outputs == 1) * (labels == 1)).sum() # True positives
+    tn = ((outputs == 0) * (labels == 0)).sum() # True negatives
+    fp = ((outputs == 1) * (labels == 0)).sum() # False positives
+    fn = ((outputs == 0) * (labels == 1)).sum() # False negatives
 
     return torch.tensor([tn, fp, fn ,tp]).reshape(2,2).type(torch.int)
 
