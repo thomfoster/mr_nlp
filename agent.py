@@ -160,7 +160,7 @@ class GeneiAgent():
                 binary_outputs = (mskd_outs > .5).type(torch.int)
 
                 # Confusion matrix update
-                cf += _cf(binary_outputs, batch.labels)
+                cf += _cf(binary_outputs, mskd_lbs)
                 logger.debug('val outputs shape:', binary_outputs.shape)
 
                 # After n_val_iters, update self.cf and self.mcc, then break
