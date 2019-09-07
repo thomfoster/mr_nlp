@@ -75,9 +75,9 @@ if __name__ == '__main__':
 
     if args.resume_chkpt_path is not None:
         if args.use_S3:
-            genei.load_chkpt_from_S3(resume_chkpt_path)
+            genei.load_chkpt_from_S3(args.resume_chkpt_path)
         else:
-            genei.load_chkpt(resume_chkpt_path)
+            genei.load_chkpt(args.resume_chkpt_path)
 
     genei.train(train_loader = train_loader,
                 valid_loader = valid_loader,
