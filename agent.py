@@ -1,7 +1,6 @@
 import torch, s3fs, shutil, os
 import torch.nn as nn
 import logging
-logger = logging.getLogger(__name__)
 
 from utils import _cf, _binary_smooth, _mcc
 
@@ -13,9 +12,10 @@ def lr_schedule(lr,step):
 class GeneiAgent():
     def __init__(self, model, optimizer=None, criterion=None):
         super(GeneiAgent, self).__init__()
+        self.logger = logging.getLogger(__name__)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print('Device:',self.device)
-        logger.info(f'Using device:',self.device)
+        self.logger.info(f'Using device:',self.device)
         self.step = 0
         self.model = model.to(self.device)
         self.optimizer = optimizer
@@ -32,7 +32,7 @@ class GeneiAgent():
                     'optimizer':self.optimizer.state_dict(),
                     'cf': self.cf,
                     'mcc': self.mcc}, fn)
-        logger.info(f'Saved checkpoint at step {self.step} and mcc {self.mcc}')
+        self.logger.info(f'Saved checkpoint at step {self.step} and mcc {self.mcc}')
 
     def save_chkpt_to_local(self, dir):
         fn = os.path.join(dir, self.gen_chkpt_fn())
@@ -49,7 +49,7 @@ class GeneiAgent():
 
 
     def save_chkpt_to_AWS(self, aws_save_path):
-        logger.info('Saving checkpoint to S3...')
+        self.logger.info('Saving checkpoint to S3...')
         fn = os.path.join(aws_save_path, self.gen_chkpt_fn())
         fs = s3fs.S3FileSystem()
         with fs.open(fn,'wb') as f:
@@ -60,7 +60,7 @@ class GeneiAgent():
     def download_chkpt_from_S3(chkpt_file):
         fs = s3fs.S3FileSystem()
         with fs.open(chkpt_file) as f:
-            logger.info('Downloading checkpoint from S3')
+            self.logger.info('Downloading checkpoint from S3')
             local_file = open(os.path.split(chkpt_file)[1], 'wb')
             shutil.copyfileobj(f, local_file)
             local_file.close()
@@ -84,7 +84,7 @@ class GeneiAgent():
               save_chkpt_freq=10_000,
               use_S3=False):
 
-        logger.info(f'Starting training from step: {self.step}')
+        self.logger.info(f'Starting training from step: {self.step}')
         while self.step < tot_training_steps:
             print('Training')
             self.optimizer.zero_grad() # Zero the gradient
@@ -120,7 +120,7 @@ class GeneiAgent():
 
                 # Print step every 100 iterations
                 if (idx+1)%100==0:
-                    logger.info(f'Steps: {self.step}')
+                    self.logger.info(f'Steps: {self.step}')
                     print(f'Steps: {self.step}')
 
                 # Validate model every 1000 batches
@@ -135,7 +135,7 @@ class GeneiAgent():
                         else:
                             self.save_chkpt_to_local(save_chkpt_dir)
                     else:
-                        logger.info('Cannot save because no saving path specified')
+                        self.logger.info('Cannot save because no saving path specified')
 
 
     def validate(self, valid_loader, val_iters=100, alpha=0.1):
@@ -144,7 +144,7 @@ class GeneiAgent():
 
         with torch.no_grad(): # No recording of gradients to save memory for validation
             print('Validating')
-            logger.info('Validating...')
+            self.logger.info('Validating...')
 
             cf = torch.zeros(2,2).type(torch.int)
             valid_loss = 0
@@ -168,12 +168,12 @@ class GeneiAgent():
 
                 # Confusion matrix update
                 cf += _cf(binary_outputs, mskd_lbs)
-                logger.debug('val outputs shape:', binary_outputs.shape)
+                self.logger.debug('val outputs shape:', binary_outputs.shape)
 
                 # After n_val_iters, update self.cf and self.mcc, then break
                 if (i+1)%val_iters == 0:
                     self.cf = cf
-                    logger.info('confusion_matrix: \n', self.cf)
+                    self.logger.info('confusion_matrix: \n', self.cf)
                     print('confusion_matrix: \n', self.cf)
                     tn, fp, fn, tp = self.cf.type(torch.float).view(-1)
                     self.mcc = _mcc(tn, fp, fn, tp)
