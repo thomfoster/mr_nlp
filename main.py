@@ -53,9 +53,6 @@ if __name__ == '__main__':
     
     logger.info(args)
 
-
-    print('Hi there')
-
     # Load in data
     train_loader = gen_loader(args, collate_fn, type='train')
     valid_loader = gen_loader(args, collate_fn, type='valid')
