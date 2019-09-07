@@ -45,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--grad_accum_steps', default=6, type=int, help='gradient accumulation')
     parser.add_argument('--steps', default=150_000, type=int, help='total number of steps')
     parser.add_argument('--alpha', default=0.1, type=float, help='label-smoothing parameter')
-    parser.add_argument('--val_freq', default=300, type-int, help='frequency at which validation is done')
+    parser.add_argument('--val_freq', default=300, type=int, help='frequency at which validation is done')
     parser.add_argument('--resume_chkpt_path', default=None)
     parser.add_argument('--save_chkpt_dir', default=None, help='Give a directory to save checkpoints to')
     parser.add_argument('--save_chkpt_freq', default=10_000, type=int, help='Frequency at which chkpts are saved')
