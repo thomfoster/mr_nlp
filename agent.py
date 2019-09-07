@@ -79,6 +79,7 @@ class GeneiAgent():
               tot_training_steps=150_000,
               grad_accum_steps=6,
               alpha=0.1,
+              val_freq = 300
               save_chkpt_dir=None,
               save_chkpt_freq=10_000,
               use_S3=False):
