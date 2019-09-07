@@ -84,7 +84,7 @@ if __name__ == '__main__':
                 tot_training_steps = args.steps,
                 grad_accum_steps=args.grad_accum_steps,
                 alpha=args.alpha,
-                save_chkpt_path=save_chkpt_path,
+                save_chkpt_dir=save_chkpt_dir,
                 save_chkpt_freq=save_chkpt_freq
                 )
 

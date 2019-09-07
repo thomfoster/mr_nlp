@@ -34,6 +34,10 @@ class GeneiAgent():
                     'mcc': self.mcc}, fn)
         logger.info(f'Saved checkpoint at step {self.step} and mcc {self.mcc}')
 
+    def save_chkpt_to_local(self, dir):
+        fn = os.path.join(dir, self.gen_chkpt_fn())
+        self.save_chkpt(fn)
+
     def load_chkpt(self, chkpt_file):
         chkpt = torch.load(chkpt_file, map_location=self.device)
         self.step = chkpt['step']
@@ -75,7 +79,7 @@ class GeneiAgent():
               tot_training_steps=150_000,
               grad_accum_steps=6,
               alpha=0.1,
-              save_chkpt_path=None,
+              save_chkpt_dir=None,
               save_chkpt_freq=10_000):
 
         logger.info(f'Starting training from step: {self.step}')
@@ -123,11 +127,11 @@ class GeneiAgent():
 
                 # Save every 10_000 steps
                 if (idx+1)%save_chkpt_freq==0:
-                    if save_chkpt_path is not None:
+                    if save_chkpt_dir is not None:
                         if use_S3:
-                            self.save_chkpt_to_AWS(save_chkpt_path)
+                            self.save_chkpt_to_AWS(save_chkpt_dir)
                         else:
-                            self.save_chkpt(save_chkpt_path)
+                            self.save_chkpt_to_local(save_chkpt_dir)
                     else:
                         logger.info('Cannot save because no saving path specified')
 
