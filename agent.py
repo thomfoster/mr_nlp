@@ -61,7 +61,7 @@ class GeneiAgent():
         fs = s3fs.S3FileSystem()
         with fs.open(chkpt_file) as f:
             logger.info('Downloading checkpoint from S3')
-            local_file = open(os.path.split(chkpt_file[1]), 'wb')
+            local_file = open(os.path.split(chkpt_file)[1], 'wb')
             shutil.copyfileobj(f, local_file)
             local_file.close()
 
