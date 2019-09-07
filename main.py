@@ -47,7 +47,7 @@ if __name__ == '__main__':
     parser.add_argument('--alpha', default=0.1, type=float, help='label-smoothing parameter')
     parser.add_argument('--resume_chkpt_path', default=None)
     parser.add_argument('--save_chkpt_dir', default=None, help='Give a directory to save checkpoints to')
-    parser.add_argument('--save_chktp_freq', default=10_000, type=int, help='Frequency at which chkpts are saved')
+    parser.add_argument('--save_chkpt_freq', default=10_000, type=int, help='Frequency at which chkpts are saved')
     parser.add_argument('--use_S3', default=False)
 
     args = parser.parse_args()
