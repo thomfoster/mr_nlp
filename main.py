@@ -49,9 +49,9 @@ if __name__ == '__main__':
     parser.add_argument('--use_S3', default=False)
 
     args = parser.parse_args()
+    for k,v in args.items():
+        logger.info(k, v)
     
-    logger.info(args)
-
     # Load in data
     train_loader = gen_loader(args, collate_fn, type='train')
     valid_loader = gen_loader(args, collate_fn, type='valid')
