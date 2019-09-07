@@ -15,7 +15,7 @@ class GeneiAgent():
         self.logger = logging.getLogger('__main__')
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print('Device:',self.device)
-        self.logger.info(f'Using device:',self.device)
+        self.logger.info(f'Using device: {self.device}')
         self.step = 0
         self.model = model.to(self.device)
         self.optimizer = optimizer
@@ -172,12 +172,12 @@ class GeneiAgent():
 
                 # Confusion matrix update
                 cf += _cf(binary_outputs, mskd_lbs)
-                self.logger.debug('val outputs shape:', binary_outputs.shape)
+                self.logger.debug(f'val outputs shape: {binary_outputs.shape}')
 
                 # After n_val_iters, update self.cf and self.mcc, then break
                 if (i+1)%val_iters == 0:
                     self.cf = cf
-                    self.logger.info('confusion_matrix: \n', self.cf)
+                    self.logger.info(f'confusion_matrix: \n{self.cf}')
                     print('confusion_matrix: \n', self.cf)
                     tn, fp, fn, tp = self.cf.type(torch.float).view(-1)
                     self.mcc = _mcc(tn, fp, fn, tp)
