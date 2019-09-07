@@ -35,8 +35,6 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     logger.addHandler(ch)
 
-
-
     parser = argparse.ArgumentParser(description='Genei V1')
 
     # Optimizer, batch size and gradient accumulation, and number of steps parameters
@@ -52,12 +50,11 @@ if __name__ == '__main__':
     parser.add_argument('--use_S3', default=False)
 
     args = parser.parse_args()
-
-
-    print(logger)
     
     logger.info(args)
 
+
+    print('Hi there')
 
     # Load in data
     train_loader = gen_loader(args, collate_fn, type='train')
