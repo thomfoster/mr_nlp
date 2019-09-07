@@ -79,7 +79,7 @@ class GeneiAgent():
               tot_training_steps=150_000,
               grad_accum_steps=6,
               alpha=0.1,
-              val_freq = 300
+              val_freq=300,
               save_chkpt_dir=None,
               save_chkpt_freq=10_000,
               use_S3=False):
@@ -118,13 +118,13 @@ class GeneiAgent():
                 # Update step
                 self.step += 1
 
-                # Print step every 50 iterations
+                # Print step every 100 iterations
                 if (idx+1)%100==0:
                     logger.info(f'Steps: {self.step}')
                     print(f'Steps: {self.step}')
 
                 # Validate model every 1000 batches
-                if (idx+1)%300==0:
+                if (idx+1)%val_freq==0:
                     self.validate(valid_loader=valid_loader, alpha=alpha)
 
                 # Save every 10_000 steps
