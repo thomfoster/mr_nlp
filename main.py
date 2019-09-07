@@ -49,7 +49,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_S3', default=False)
 
     args = parser.parse_args()
-    for k,v in args.items():
+    for k,v in vars(args).items():
         logger.info(k, v)
     
     # Load in data
