@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     for k,v in vars(args).items():
-        logger.info(k, v)
+        logger.info(str(k) + str(v))
     
     # Load in data
     train_loader = gen_loader(args, collate_fn, type='train')
