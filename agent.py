@@ -1,4 +1,4 @@
-import torch, s3fs, shutil
+import torch, s3fs, shutil, os
 import torch.nn as nn
 import logging
 logger = logging.getLogger(__name__)
