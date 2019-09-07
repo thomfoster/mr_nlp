@@ -85,7 +85,8 @@ if __name__ == '__main__':
                 grad_accum_steps=args.grad_accum_steps,
                 alpha=args.alpha,
                 save_chkpt_dir=args.save_chkpt_dir,
-                save_chkpt_freq=args.save_chkpt_freq
+                save_chkpt_freq=args.save_chkpt_freq,
+                use_S3=args.use_S3
                 )
 
 

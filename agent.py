@@ -80,7 +80,8 @@ class GeneiAgent():
               grad_accum_steps=6,
               alpha=0.1,
               save_chkpt_dir=None,
-              save_chkpt_freq=10_000):
+              save_chkpt_freq=10_000,
+              use_S3=False):
 
         logger.info(f'Starting training from step: {self.step}')
         while self.step < tot_training_steps:
