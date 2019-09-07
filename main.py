@@ -40,12 +40,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Genei V1')
 
     # Optimizer, batch size and gradient accumulation, and number of steps parameters
-    parser.add_argument('--lr', default=0.0002, type=float, help='learning rate')
+    parser.add_argument('--lr', default=0.002, type=float, help='learning rate')
     parser.add_argument('--bs', default=6, type=int, help='batch size')
     parser.add_argument('--grad_accum_steps', default=6, type=int, help='gradient accumulation')
     parser.add_argument('--steps', default=150_000, type=int, help='total number of steps')
     parser.add_argument('--alpha', default=0.1, type=float, help='label-smoothing parameter')
     parser.add_argument('--resume_chkpt_path', default=None)
+    parser.add_argument('--save_chkpt_dir', default=None, help='Give a directory to save checkpoints to')
+    parser.add_argument('--save_chktp_freq', default=10_000, type=int, help='Frequency at which chkpts are saved')
     parser.add_argument('--use_S3', default=False)
 
     args = parser.parse_args()
@@ -81,7 +83,9 @@ if __name__ == '__main__':
                 lr = args.lr,
                 tot_training_steps = args.steps,
                 grad_accum_steps=args.grad_accum_steps,
-                alpha=args.alpha
+                alpha=args.alpha,
+                save_chkpt_path=save_chkpt_path,
+                save_chkpt_freq=save_chkpt_freq
                 )
 
 

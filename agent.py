@@ -75,7 +75,8 @@ class GeneiAgent():
               tot_training_steps=150_000,
               grad_accum_steps=6,
               alpha=0.1,
-              save_chkpt_path=None):
+              save_chkpt_path=None,
+              save_chkpt_freq=10_000):
 
         logger.info(f'Starting training from step: {self.step}')
         while self.step < tot_training_steps:
@@ -121,7 +122,7 @@ class GeneiAgent():
                     self.validate(valid_loader=valid_loader, alpha=alpha)
 
                 # Save every 10_000 steps
-                if (idx+1)%1000==0:
+                if (idx+1)%save_chkpt_freq==0:
                     if save_chkpt_path is not None:
                         if use_S3:
                             self.save_chkpt_to_AWS(save_chkpt_path)
