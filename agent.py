@@ -24,7 +24,7 @@ class GeneiAgent():
         self.mcc = 0
 
     def gen_chkpt_fn(self):
-        return 'chkpt_step_'+str(self.step)+'mcc_'+str(round(self.mcc, 3))+'.pth.tar'
+        return 'chkpt_step_'+str(self.step)+'mcc_'+str(round(self.mcc.item(), 3))+'.pth.tar'
 
     def save_chkpt(self, fn):
         torch.save({'step':self.step+1,
