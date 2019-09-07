@@ -20,7 +20,6 @@ import argparse
 
 if __name__ == '__main__':
 
-
     # Set up logging
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
