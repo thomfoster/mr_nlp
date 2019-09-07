@@ -12,7 +12,7 @@ def lr_schedule(lr,step):
 class GeneiAgent():
     def __init__(self, model, optimizer=None, criterion=None):
         super(GeneiAgent, self).__init__()
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger('__main__')
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print('Device:',self.device)
         self.logger.info(f'Using device:',self.device)
