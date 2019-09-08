@@ -36,6 +36,8 @@ For example, if you have a jupyter notebook running on port 8888 and tensorboard
 
 ```ssh -i <path to key> -L 5001:localhost:888 -L 5002:localhost:6006 <username>@<ec2-amazonaws.com etc>```
 
+If you want your connection to do more than just accept outward data from the host, I think you need to enable a custom TCP rule in the instance security settings (very straightforward).
+
 For code editig remotely in VSCode, install the remote development pack, and modify one of your config files in this style:
 
 ```
