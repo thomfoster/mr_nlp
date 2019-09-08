@@ -1,0 +1,16 @@
+# Instructions for setting up NoMachine
+
+Download the nomachine server files `aws s3 cp <path_to_nomachine.deb> <new_no_machine.deb>` \
+Install it `sudo apt install <new_no_machine.deb>`\
+Make a folder for no machine to access the ssh keys at ~/.nx/config
+Copy the ssh keys there `cp -p ~/.shh/auuthorized_keys ~/.nx/config/auuthorized.crt`\
+`chmod 600 ~/.nx/config/authorized.crt`
+
+# You need to have a display manager running
+
+One such program is xubuntu desktop: `sudo apt install xubuntu-desktop`\
+Once install start it with the display manager `sudo service lightdm start`\
+\
+
+# On your local machine
+Add a new connection, ensure that port 4000 is open on the instance, and connect to it.
