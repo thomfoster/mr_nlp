@@ -44,4 +44,7 @@ For code editig remotely in VSCode, install the remote development pack, and mod
 Host ec2-34-244-39-138.eu-west-1.compute.amazonaws.com
     User ubuntu
     HostName ec2-34-244-39-138.eu-west-1.compute.amazonaws.com
-    IdentityFile /home/t/Documents/genei/laksh_genei_key.pem```
+    IdentityFile /home/t/Documents/genei/laksh_genei_key.pem
+```
+
+Connecting to the remote host in vscode will then allow you to do all your editing as if you were running vscode on the local machine.
