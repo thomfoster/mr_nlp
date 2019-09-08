@@ -27,3 +27,18 @@ Alternatively you can do this in terminal with `git push origin --delete <featur
 `git pull origin master`
 
 And you're done.
+
+# Remote working
+
+Any server style process, such a jupyter notebook or tensorboard, that runs on the remote host can be accessed from a local web browser using port forwarding. To do this you just need to specify which ports to forward and where when you ssh into the remote host.
+
+For example, if you have a jupyter notebook running on port 8888 and tensorboard running on 6006, and you want to access them on ports 5001 and 5002, your SSH command becomes:
+
+```ssh -i <path to key> -L 5001:localhost:888 -L 5002:localhost:6006 <username>@<ec2-amazonaws.com etc>```
+
+For code editig remotely in VSCode, install the remote development pack, and modify one of your config files in this style:
+
+```Host ec2-34-244-39-138.eu-west-1.compute.amazonaws.com
+    User ubuntu
+    HostName ec2-34-244-39-138.eu-west-1.compute.amazonaws.com
+    IdentityFile /home/t/Documents/genei/laksh_genei_key.pem```
