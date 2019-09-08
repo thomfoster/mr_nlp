@@ -38,7 +38,8 @@ For example, if you have a jupyter notebook running on port 8888 and tensorboard
 
 For code editig remotely in VSCode, install the remote development pack, and modify one of your config files in this style:
 
-```Host ec2-34-244-39-138.eu-west-1.compute.amazonaws.com
+```
+Host ec2-34-244-39-138.eu-west-1.compute.amazonaws.com
     User ubuntu
     HostName ec2-34-244-39-138.eu-west-1.compute.amazonaws.com
     IdentityFile /home/t/Documents/genei/laksh_genei_key.pem```
