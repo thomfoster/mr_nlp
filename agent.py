@@ -1,21 +1,24 @@
 import torch, s3fs, shutil, os
 import torch.nn as nn
+import numpy as np
 import logging
 
 from utils import _cf, _binary_smooth, _mcc
 
-def lr_schedule(lr,step):
-    return lr * min(step**.5, step * 30_000**-1.5)
 
+def lr_schedule(lr, step):
+    return lr * min(step**.5, step * 30_000**-1.5)
 
 
 class GeneiAgent():
     def __init__(self, model, optimizer=None, criterion=None):
         super(GeneiAgent, self).__init__()
+
         self.logger = logging.getLogger('__main__')
+
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        print('Device:',self.device)
         self.logger.info(f'Using device: {self.device}')
+
         self.step = 0
         self.model = model.to(self.device)
         self.optimizer = optimizer
@@ -23,8 +26,10 @@ class GeneiAgent():
         self.cf = 0
         self.mcc = 0
 
-    def gen_chkpt_fn(self):
+
+    def gen_chkpt_filename(self):
         return 'chkpt_step_'+str(self.step)+'mcc_'+str(round(self.mcc.item(), 3))+'.pth.tar'
+
 
     def save_chkpt(self, fn):
         torch.save({'step':self.step+1,
@@ -34,9 +39,11 @@ class GeneiAgent():
                     'mcc': self.mcc}, fn)
         self.logger.info(f'Saved checkpoint at step {self.step} and mcc {self.mcc}')
 
+
     def save_chkpt_to_local(self, dir):
-        fn = os.path.join(dir, self.gen_chkpt_fn())
+        fn = os.path.join(dir, self.gen_chkpt_filename())
         self.save_chkpt(fn)
+
 
     def load_chkpt(self, chkpt_file):
         chkpt = torch.load(chkpt_file, map_location=self.device)
@@ -45,16 +52,17 @@ class GeneiAgent():
         self.optimizer.load_state_dict(chkpt['optimizer'])
         self.cf = chkpt['cf']
         self.mcc = chkpt['mcc']
-        print(f'Loaded checkpoint with step {self.step}, cf:{self.cf}, mcc:{self.mcc}')
+        self.logger.info(f'Loaded checkpoint with step {self.step}, cf:{self.cf}, mcc:{self.mcc}')
 
 
     def save_chkpt_to_AWS(self, aws_save_path):
         self.logger.info('Saving checkpoint to S3...')
-        fn = os.path.join(aws_save_path, self.gen_chkpt_fn())
+        fn = os.path.join(aws_save_path, self.gen_chkpt_filename())
         fs = s3fs.S3FileSystem()
         with fs.open(fn,'wb') as f:
             self.save_chkpt(f)
-            print("saved checkpoint to AWS")
+            self.logger.info("saved checkpoint to AWS")
+
 
     @staticmethod
     def download_chkpt_from_S3(chkpt_file):
@@ -65,6 +73,7 @@ class GeneiAgent():
             local_file = open(os.path.split(chkpt_file)[1], 'wb')
             shutil.copyfileobj(f, local_file)
             local_file.close()
+
 
     def load_chkpt_from_S3(self, chkpt_file):
         GeneiAgent.download_chkpt_from_S3(chkpt_file)
@@ -85,16 +94,15 @@ class GeneiAgent():
               save_chkpt_freq=10_000,
               use_S3=False):
 
-        print('name when training: ', __name__)
-        print('Logger: ',  self.logger)
-
         self.logger.info(f'Starting training from step: {self.step}')
+
         while self.step < tot_training_steps:
-            print('Training')
+
             self.optimizer.zero_grad() # Zero the gradient
             self.model.train() # Model in train mode so it does dropout and batch norm appropriately
 
             for idx, batch in enumerate(train_loader): # Iterate through the batches
+
                 self.optimizer.param_groups[0]['lr'] = lr_schedule(lr, self.step) # Learning rate schedule
 
                 # Forward prop, compute output through LM and finetune layer
@@ -119,13 +127,12 @@ class GeneiAgent():
                     self.optimizer.step()
                     self.optimizer.zero_grad()
 
-                # Update step
+                # Increment step
                 self.step += 1
 
                 # Print step every 100 iterations
                 if (idx+1)%100==0:
                     self.logger.info(f'Steps: {self.step}')
-                    print(f'Steps: {self.step}')
 
                 # Validate model every 1000 batches
                 if (idx+1)%val_freq==0:
@@ -147,7 +154,7 @@ class GeneiAgent():
         self.model.eval() # Model in eval mode to avoid dropout and use appropriate batch norm
 
         with torch.no_grad(): # No recording of gradients to save memory for validation
-            print('Validating')
+
             self.logger.info('Validating...')
 
             cf = torch.zeros(2,2).type(torch.int)
@@ -160,6 +167,9 @@ class GeneiAgent():
                 msk = (batch.labels >= 0)
                 mskd_lbs = batch.labels[msk]
                 mskd_outs = output[msk]
+
+                # Tiny func to just view annotated output
+                self.export_sents_with_scores(output, batch)
 
                 # Label smoothing for masked labels
                 smooth_lbs = _binary_smooth(mskd_lbs, alpha=alpha) # Eg [0,0,0,1,0] ---> [0.05, 0.05, 0.05, 0.95, 0.05]
@@ -178,11 +188,28 @@ class GeneiAgent():
                 if (i+1)%val_iters == 0:
                     self.cf = cf
                     self.logger.info(f'confusion_matrix: \n{self.cf}')
-                    print('confusion_matrix: \n', self.cf)
                     tn, fp, fn, tp = self.cf.type(torch.float).view(-1)
                     self.mcc = _mcc(tn, fp, fn, tp)
-                    print(f'MCC:{self.mcc}')
+                    self.logger.info(f'MCC:{self.mcc}')
                     self.valid_loss = valid_loss
-                    print(f'Validation loss:{self.valid_loss}')
+                    self.logger.info(f'Validation loss:{self.valid_loss}')
                     break
 
+    def export_sents_with_scores(self, outputs, batch):
+        # Create array of tuples of sentences annoted with label and score
+        tuples = np.dstack([batch.src_txt, batch.labels, outputs.numpy()])
+
+        # Export each sentence
+        for document in tuples:
+            for sentence, label, score in document:
+                if label < 0:
+                    continue
+                else:
+                    print('Sentence:')
+                    print(sentence)
+                    print()
+
+                    print('Label: ', label)
+                    print('Score: ', score)
+                    print()
+                    print()
