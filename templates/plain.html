@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block intro %}
+  <h1>Genei Distill</h1>
+  <p>Simple tool to visualise the importance weights for the CNN DM Dataset.</p>
+{% endblock %}
+
+{% block script %}
+  <script>
+    function addSubmit(ev) {
+      ev.preventDefault();
+      var request = new XMLHttpRequest();
+      request.addEventListener('load', addShow);
+      request.open('POST', {{ url_for('_listener')|tojson }});
+      request.send(new FormData(this));
+    }
+    function addShow() {
+      var data = JSON.parse(this.responseText);
+      var span = document.getElementById('result');
+
+      var i;
+      console.log('Length of scores:')
+      console.log(data.output.length)
+      console.log('Length of results:')
+      console.log(data.result.length)
+      span.innerHTML = '';
+      for (i=0; i < data.result.length; i++){
+        score = data.output[i]
+        lightness = 50 + 50*(1-score)
+        console.log(lightness)
+        new_line =  '<span style="color: hsl(0, 100%, ';
+        new_line += lightness;
+        new_line += '%)">';
+        new_line += data.result[i];
+        new_line += '</span>'
+        span.innerHTML += new_line;
+      }
+
+    }
+    var form = document.getElementById('form');
+    form.addEventListener('submit', addSubmit);
+  </script>
+{% endblock %}

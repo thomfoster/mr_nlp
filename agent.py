@@ -197,12 +197,15 @@ class GeneiAgent():
 
     def export_sents_with_scores(self, outputs, batch):
         # Create array of tuples of sentences annoted with label and score
-        tuples = np.dstack([batch.src_txt, batch.labels, outputs.numpy()])
+        num_sents = batch.labels.numpy().shape[-1]
+        sents = np.array(batch.src_txt)[:, :num_sents]
+
+        tuples = np.dstack([sents, batch.labels.numpy(), outputs.numpy()])
 
         # Export each sentence
         for document in tuples:
             for sentence, label, score in document:
-                if label < 0:
+                if float(label) < 0:
                     continue
                 else:
                     print('Sentence:')

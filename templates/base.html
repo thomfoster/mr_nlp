@@ -1,0 +1,26 @@
+<!doctype html>
+<title>JavaScript Example</title>
+<link rel="stylesheet" href="https://unpkg.com/sakura.css@1.0.0/css/normalize.css">
+<link rel="stylesheet" href="https://unpkg.com/sakura.css@1.0.0/css/sakura-dark.css">
+<style>
+  ul { margin: 0; padding: 0; display: flex; list-style-type: none; }
+  li > * { padding: 1em; }
+  li.active > a { color: #5e5e5e; border-bottom: 2px solid #4a4a4a; }
+  /* form { display: flex; } */
+  label > input { width: 3em; }
+  form > * { padding-right: 1em; }
+  #result { font-weight: bold; }
+  #box { width:100% }
+</style>
+<hr>
+<p>{% block intro %}{% endblock %}</p>
+<form id="form">
+  <label>Filepath: <input id='box' name="filepath"></label>
+  <label>ID within file: <input id='box' name="id"></label>
+  <br>
+  <input type="submit" value="Summarise">
+</form>
+<hr>
+<br>
+<span><span id="result"></span></span>
+{% block script %}{% endblock %}

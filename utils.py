@@ -3,6 +3,7 @@ import os
 import random
 from random import shuffle
 import torch.utils.data as D
+import numpy as np
 
 
 def get_filepaths(file_type):
@@ -41,14 +42,15 @@ def gen_loader(args, collate_fn, type='train'):
 
 class Batch:
     # Helper class to return all the important things from a summarisation dataset
-    def __init__(self, src, segs, clss, labels, mask_attn, mask_clss, src_txt, tgt_txt):
+    def __init__(self, src, segs, clss, labels, mask_attn, mask_clss, src_txt):
         self.src = src
         self.segs = segs
         self.clss = clss
         self.labels = labels
         self.mask_attn = mask_attn
         self.mask_clss = mask_clss
-
+        self.src_txt = src_txt
+        
 
 def _binary_smooth(label, alpha=0.1):
     return label*(1-alpha) + alpha*.5
@@ -73,10 +75,9 @@ def collate_fn(batch):
     clss = _yang_pad([s['clss'] for s in batch], -1)
     labels = _yang_pad([s['labels'] for s in batch], -1)
 
-    # Tag each batch with the original text and summary to allow easier inspection of results
+    # Tag each batch with the original text to allow easier inspection of results
     # Shouldn't be a problem for GPU memory as we don't push it to GPU
-    src_txt = [s['src_txt'] for s in batch]
-    tgt_txt = [s['tgt_txt'] for s in batch]
+    src_txt = _yang_pad([s['src_txt'] for s in batch], -1)
 
     # Ensure that masks initially specified as 0s and 1s
     # are converted to float32 tensors
@@ -94,7 +95,7 @@ def collate_fn(batch):
     mask_clss = 1 - (clss == -1).type(torch.float32)
     mask_clss = mask_clss.to(device)
 
-    return Batch(src, segs, clss, labels, mask_attn, mask_clss, src_txt, tgt_txt)
+    return Batch(src, segs, clss, labels, mask_attn, mask_clss, src_txt)
 
 
 def _cf(outputs, labels):
