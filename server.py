@@ -16,7 +16,7 @@ model = Summarizer(language_model, finetune_model)
 model.eval()
 
 genei = GeneiAgent(model=model, optimizer=None)
-chkpt = torch.load('./checkpoints/chkpt_step_67848mcc_0.319.ph.tar', map_location=torch.device('cpu'))
+chkpt = torch.load('./checkpoints/chkpt_step_67848mcc_0.319.pth.tar', map_location=torch.device('cpu'))
 model.load_state_dict(chkpt['state_dict'])
 
 app = Flask(__name__)
