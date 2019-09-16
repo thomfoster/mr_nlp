@@ -34,6 +34,4 @@ def _listener():
     result = batch.src_txt[0]
     output = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0]
     output = output.data.numpy()[0,:].tolist()
-    print(result)
-    print(output)
     return jsonify(result=result, output=output)
