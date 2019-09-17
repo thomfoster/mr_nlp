@@ -13,7 +13,7 @@
       ev.preventDefault();
       var request = new XMLHttpRequest();
       request.addEventListener('load', addShow);
-      request.open('POST', {{ url_for('_listener')|tojson }});
+      request.open('POST', {{ url_for('_summarise_files')|tojson }});
       request.send(new FormData(this));
     }
 

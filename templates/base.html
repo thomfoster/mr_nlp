@@ -1,5 +1,5 @@
 <!doctype html>
-<title>JavaScript Example</title>
+<title>Genei Beta</title>
 <link rel="stylesheet" href="https://unpkg.com/sakura.css@1.0.0/css/normalize.css">
 <link rel="stylesheet" href="https://unpkg.com/sakura.css@1.0.0/css/sakura-dark.css">
 <style>
@@ -12,18 +12,15 @@
   #result { font-weight: bold; }
   #box { width:100% }
 </style>
+
+
 <hr>
-<p>{% block intro %}{% endblock %}</p>
-<form id="form">
-  <label>Filepath: <input id='box' name="filepath"></label>
-  <label>ID within file: <input id='box' name="id"></label>
-  <br>
-  <input type="submit" value="Summarise">
-</form>
+<p>
+  <h1>Genei</h1>
+  <p>Simple tool to visualise the importance weights for abitrary text input.</p>
+</p>
+{% block form %}{% endblock %}
 <hr>
 <br>
-<span>
-  <span id="summary_result"></span>
-  <span id="result"></span>
-</span>
+{% block content %}{% endblock %}
 {% block script %}{% endblock %}

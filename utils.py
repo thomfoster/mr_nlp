@@ -4,6 +4,7 @@ import random
 from random import shuffle
 import torch.utils.data as D
 import numpy as np
+import nltk
 
 
 def get_filepaths(file_type):
@@ -56,6 +57,40 @@ def _binary_smooth(label, alpha=0.1):
     return label*(1-alpha) + alpha*.5
 
 
+def yang_encode(bert_tokenizer_instance, src_txt):
+    '''Encoding just like how yang does. 
+    Except we leave in punctuation because we're not complete morons.'''
+    sentences = nltk.sent_tokenize(src_txt)
+
+    src = []
+    segs = []
+    clss = []
+
+    for i, sent in enumerate(sentences):
+        clss.append(len(src))
+
+        encs = [101]
+        encs += bert_tokenizer_instance.encode(sent)
+        encs += [102]
+
+        segs += [i%2 for _ in encs]
+        src += encs
+
+    if len(src) > 512:
+        src = src[:511] + [102]  # Truncate and add a weird end of sent token
+        segs = segs[:512]
+        clss = list(filter(lambda x: x < 512, clss))
+
+    s = {}
+    s['src'] = src
+    s['src_txt'] = sentences
+    s['segs'] = segs
+    s['clss'] = clss
+    s['labels'] = [1 for _ in clss]
+
+    return s
+
+    
 def _yang_pad(data, pad_id):
     # Pads data to its max length along first (sequence length) axis
     width = max(len(d) for d in data)
