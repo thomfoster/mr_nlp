@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block intro %}
+  <h1>Genei</h1>
+  <p>Simple tool to visualise the importance weights for the CNN DM Dataset.</p>
+{% endblock %}
+
+{% block script %}
+  <script>
+    function predicate(x) {return x > 0.5}
+
+    function addSubmit(ev) {
+      ev.preventDefault();
+      var request = new XMLHttpRequest();
+      request.addEventListener('load', addShow);
+      request.open('POST', {{ url_for('_summarise_files')|tojson }});
+      request.send(new FormData(this));
+    }
+
+    function addShow() {
+      var data = JSON.parse(this.responseText);
+      var result = document.getElementById('result');
+      var summary_result = document.getElementById('summary_result');
+
+      n_original_sentences = data.result.length;
+      n_in_summary = data.output.filter(predicate).length;
+      summary_result.innerHTML = `<b>Cutdown ${n_original_sentences} sentences into ${n_in_summary}.</b>`
+
+      result.innerHTML = '<h3> Full text </h3>';
+      summary_result.innerHTML += '<br><h3>In short: </h3>';
+      summary_result.innerHTML += '<ul>';
+
+      var i;
+      for (i=0; i < data.result.length; i++){
+
+        sentence = data.result[i];
+        score = data.output[i];
+        console.log(sentence)
+        console.log(score)
+        console.log()
+
+        if (score > 0.5) {
+          console.log('If successful', score)
+          new_line = '<li>';
+          new_line += sentence;
+          new_line += '</li>';
+          summary_result.innerHTML += new_line
+        }
+
+        lightness = 50 + 50*(1-score)
+
+        new_line =  '<span style="color: hsl(0, 100%, ';
+        new_line += lightness;
+        new_line += '%)">';
+        new_line += sentence;
+        new_line += '</span>';
+
+        result.innerHTML += new_line;
+
+      }
+
+      summary_result.innerHTML += '</ul>'
+
+    }
+
+    var form = document.getElementById('form');
+    form.addEventListener('submit', addSubmit);
+
+  </script>
+{% endblock %}
