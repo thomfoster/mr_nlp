@@ -57,7 +57,8 @@ if __name__ == '__main__':
     valid_loader = gen_loader(args, collate_fn, type='valid')
 
     # Initialize BERT and fine-tune models
-    language_model = Bert(temp_dir='./temp' , load_pretrained_bert=True, bert_config=None)
+    #language_model = Bert(temp_dir='./temp' , load_pretrained_bert=True, bert_config=None)
+    language_model = LanguageModel(model_name='DistilBert', temp_dir='./temp', load_pretrained=True, LM_config=None)
     finetune_model = Classifier(hidden_size=768)
 
     # Wrap model together

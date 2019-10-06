@@ -2,7 +2,8 @@ import torch.nn as nn
 import torch
 import logging
 logger = logging.getLogger(__name__)
-from pytorch_transformers import BertModel
+from transformers import BertModel, OpenAIGPTModel, GPT2Model, XLNetModel, XLMModel, DistilBertModel, RobertaModel
+from transformers import BertTokenizer, OpenAIGPTTokenizer, GPT2Tokenizer, XLNetTokenizer, XLMTokenizer, DistilBertTokenizer, RobertaTokenizer
 
 class Bert(nn.Module):
     "Wrapper for the pretrained Bert module"
@@ -20,6 +21,36 @@ class Bert(nn.Module):
         final_vec = encoded_layers
         # print('bert output shape:',final_vec.shape)
         return final_vec
+
+
+MODELS = {'BERT':            (BertModel,       BertTokenizer,       'bert-base-uncased'),
+          'GPT':                    (OpenAIGPTModel,  OpenAIGPTTokenizer,  'openai-gpt'),
+          'GPT2':                         (GPT2Model,       GPT2Tokenizer,       'gpt2'),
+          'XLNet':            (XLNetModel,      XLNetTokenizer,      'xlnet-base-cased'),
+          'XLM':             (XLMModel,        XLMTokenizer,        'xlm-mlm-enfr-1024'),
+          'DistilBert':(DistilBertModel, DistilBertTokenizer, 'distilbert-base-uncased'),
+          'Roberta':              (RobertaModel,    RobertaTokenizer,    'roberta-base')}
+
+
+class LanguageModel(nn.Module):
+    "Wrapper for a pretrained language model"
+    def __init__(self, model_name='DistilBert', temp_dir, load_pretrained, LM_config=None):
+        super(LanguageModel, self).__init__()
+        self.model, self.tokenizer_class, self.pretrained_weights = MODELS[model_name]
+        if load_pretrained:
+            self.model = self.model.from_pretrained(self.pretrained_weights, cache_dir=temp_dir)
+        else:
+            self.model = self.model(LM_config)
+
+    def forward(self, x, segs, mask_attn, src_txt=None):
+        # If we want to tokenize in the training loop, need to provide a source
+        if src_txt is not None:
+            ##TODO tokenize text
+
+        encoded_layers, _ = self.model(x, segs, attention_mask = mask_attn)
+        final_vec = encoded_layers
+        return final_vec
+
 
 
 class Classifier(nn.Module):

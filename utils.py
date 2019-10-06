@@ -86,7 +86,7 @@ def yang_encode(bert_tokenizer_instance, src_txt):
     s['src_txt'] = sentences
     s['segs'] = segs
     s['clss'] = clss
-    s['labels'] = [1 for _ in clss]
+    s['labels'] = [1 for _ in clss] # Dummy labels 
 
     return s
 
