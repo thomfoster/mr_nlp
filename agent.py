@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 import logging
 
-from utils import _cf, _binary_smooth, _mcc
+from utils import _cf, _binary_smooth, _mcc, yang_encode
 
 #laksh_branch_week_0
 def lr_schedule(lr, step):
@@ -11,7 +11,7 @@ def lr_schedule(lr, step):
 
 
 class GeneiAgent():
-    def __init__(self, model, optimizer=None, criterion=None):
+    def __init__(self, model, optimizer=None):
         super(GeneiAgent, self).__init__()
 
         self.logger = logging.getLogger('__main__')
@@ -216,3 +216,27 @@ class GeneiAgent():
                     print('Score: ', score)
                     print()
                     print()
+
+
+    def return_score_list(self, sents):
+        """
+        Function to return scores of all sentences.
+        
+        :param sents: Raw, untokenized text. Eg: "Please buy our milk today Frank. Otherwise we won't have protein shakes."
+        :return: a list of pairs of sentences and summary score.
+        """
+
+        # Create a tokenizer for processing our own input
+        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        s = yang_encode(tokenizer, text, max_seq_len=512)
+
+        batch = collate_fn([s])
+        text = batch.src_txt[0]  # src_txt in batch is 2D
+
+        scores = model(batch.src, batch.segs, batch.clss, batch.mask_attn, batch.mask_clss)[0]
+        scores = scores.data.numpy()[0, :].tolist() # 0th axis is batch axis, and only 1 example in this batch.
+
+        return [(sent, score) for sent,score in zip(text, scores)]
+
+
+

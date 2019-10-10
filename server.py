@@ -48,7 +48,7 @@ def _summarise_files():
 @app.route("/_summarise_textbox", methods=["POST"])
 def _summarise_textbox():
     text = request.form.get("textbox", "No text input", type=str)
-    s = yang_encode(tokenizer, text)
+    s = yang_encode(tokenizer, text, max_seq_len=512)
     batch = collate_fn([s])
 
     text = batch.src_txt[0]  # src_txt in batch is 2D

@@ -1,20 +1,11 @@
-import os
 import torch
 import logging
-import sys
 
-import torch.nn as nn
-import torch.utils.data as D
-import numpy as np
-import math
 
-from utils import IndividualFileDataset, Batch, collate_fn, gen_loader
+from utils import collate_fn, gen_loader
 from models import Bert, Classifier, Summarizer
-from random import shuffle
 
 from agent import GeneiAgent
-
-import agent
 
 import argparse
 
@@ -75,14 +66,14 @@ if __name__ == '__main__':
         else:
             genei.load_chkpt(args.resume_chkpt_path)
 
-    genei.train(train_loader = train_loader,
-                valid_loader = valid_loader,
-                lr = args.lr,
-                tot_training_steps = args.steps,
-                grad_accum_steps=args.grad_accum_steps,
-                alpha=args.alpha,
-                val_freq=args.val_freq,
-                save_chkpt_dir=args.save_chkpt_dir,
-                save_chkpt_freq=args.save_chkpt_freq,
-                use_S3=args.use_S3
+    genei.train(train_loader = train_loader,            # torch.utils.dataset.Dataloader object containing train data
+                valid_loader = valid_loader,            # torch.utils.dataset.Dataloader object containing valid data
+                lr = args.lr,                           # learning rate
+                tot_training_steps = args.steps,        # total number of training steps
+                grad_accum_steps=args.grad_accum_steps, # number of steps before we backprop the gradient
+                alpha=args.alpha,                       # label smoothing
+                val_freq=args.val_freq,                 # frequency at which we validate our model performance
+                save_chkpt_dir=args.save_chkpt_dir,     # directory to save checkpoint to
+                save_chkpt_freq=args.save_chkpt_freq,   # frequency at which we save checkpoints
+                use_S3=args.use_S3                      # use S3 or not?
                 )

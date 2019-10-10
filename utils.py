@@ -30,9 +30,9 @@ class IndividualFileDataset(D.IterableDataset):
 
 
 def gen_loader(args, collate_fn, type='train'):
-    '''
+    """
     Function for generating a torch.utils.data.DataLoader object for our purposes
-    '''
+    """
     datasets = [IndividualFileDataset(fp) for fp in get_filepaths(type)]
     shuffle(datasets)
     dataset = D.ChainDataset(datasets)
@@ -42,7 +42,9 @@ def gen_loader(args, collate_fn, type='train'):
 
 
 class Batch:
-    # Helper class to return all the important things from a summarisation dataset
+    """
+     Helper class to return all the important things from a summarisation dataset
+    """
     def __init__(self, src, segs, clss, labels, mask_attn, mask_clss, src_txt):
         self.src = src
         self.segs = segs
@@ -57,7 +59,7 @@ def _binary_smooth(label, alpha=0.1):
     return label*(1-alpha) + alpha*.5
 
 
-def yang_encode(bert_tokenizer_instance, src_txt):
+def yang_encode(bert_tokenizer_instance, src_txt, max_seq_len = 512):
     '''Encoding just like how yang does. 
     Except we leave in punctuation because we're not complete morons.'''
     sentences = nltk.sent_tokenize(src_txt)
@@ -76,10 +78,10 @@ def yang_encode(bert_tokenizer_instance, src_txt):
         segs += [i%2 for _ in encs]
         src += encs
 
-    if len(src) > 512:
-        src = src[:511] + [102]  # Truncate and add a weird end of sent token
-        segs = segs[:512]
-        clss = list(filter(lambda x: x < 512, clss))
+    if len(src) > max_seq_len:
+        src = src[:max_seq_len-1] + [102]  # Truncate and add a weird end of sent token
+        segs = segs[:max_seq_len]
+        clss = list(filter(lambda x: x < max_seq_len, clss))
 
     s = {}
     s['src'] = src
@@ -99,11 +101,11 @@ def _yang_pad(data, pad_id):
 
 
 def collate_fn(batch):
-    '''
+    """
     Function to preprocess the batch - adds yangpadding to src, segs, clss and labels
     :param batch:
     :return:
-    '''
+    """
 
     src = _yang_pad([s['src'] for s in batch], 0)
     segs = _yang_pad([s['segs'] for s in batch], 0)
@@ -134,6 +136,11 @@ def collate_fn(batch):
 
 
 def _cf(outputs, labels):
+    """
+    :param outputs: torch tensor
+    :param labels:
+    :return:
+    """
     tp = ((outputs == 1) * (labels == 1)).sum()  # True positives
     tn = ((outputs == 0) * (labels == 0)).sum()  # True negatives
     fp = ((outputs == 1) * (labels == 0)).sum()  # False positives
